@@ -36,20 +36,12 @@ public class TianaPatrimoineSupplier implements Supplier<Patrimoine> {
             "depense par mois", compteBancaire(), debutProjet, finProjet, 5, ariary(-5_000_000));
     var premierTrancheDeRevenu =
         new FluxArgent(
-            "premiere tranche de revenu",
-            compteBancaire(),
-            debutProjet.minusMonths(1),
-            debutProjet.minusMonths(1),
-            1,
-            ariary(7_000_000));
+            "premiere tranche de revenu (10%)",
+            compteBancaire(), debutProjet.minusMonths(1), ariary(7_000_000));
     var deuxiemeTrancheDeRevenu =
         new FluxArgent(
-            "deuxieme tranche de revenu",
-            compteBancaire(),
-            finProjet.plusMonths(1),
-            finProjet.plusMonths(1),
-            31,
-            ariary(67_000_000));
+            "deuxieme tranche de revenu (90%)",
+            compteBancaire(), finProjet.plusMonths(1), ariary(67_000_000));
     return new GroupePossession(
         "projet de Tiana",
         Devise.MGA,
@@ -57,7 +49,28 @@ public class TianaPatrimoineSupplier implements Supplier<Patrimoine> {
         Set.of(depense, premierTrancheDeRevenu, deuxiemeTrancheDeRevenu));
   }
 
-  //TODO: reparer la dette et les incoherences du graphique
+  private GroupePossession detteDeTiana() {
+    var dateDette = LocalDate.of(2025, 7, 27);
+    var pretBancaire =
+        new FluxArgent("Prêt de la banque", compteBancaire(), dateDette, ariary(20_000_000));
+
+    var detteDeTiana = new Dette("Dette issue du prêt", dateDette, ariary(-24_000_000));
+
+    var remboursementDeLaDette =
+        new TransfertArgent(
+            "Remboursement de la dette",
+            compteBancaire(),
+            detteDeTiana,
+            LocalDate.of(2025, 8, 27),
+            LocalDate.of(2026, 7, 27),
+            27,
+            ariary(2_000_000));
+    return new GroupePossession(
+        "Dette de Tiana",
+        Devise.MGA,
+        dateDette,
+        Set.of(pretBancaire, detteDeTiana, remboursementDeLaDette));
+  }
 
   @Override
   public Patrimoine get() {
@@ -66,11 +79,12 @@ public class TianaPatrimoineSupplier implements Supplier<Patrimoine> {
     var terrain = terrain();
     var depenseCourante = depenseCourante();
     var projetDeTiana = projetDeTiana();
+    var detteDeTiana = detteDeTiana();
     return Patrimoine.of(
         "Patrimoine de Tiana",
         Devise.MGA,
         ajd,
         tiana,
-        Set.of(compteBancaire, terrain, depenseCourante, projetDeTiana));
+        Set.of(compteBancaire, terrain, depenseCourante, projetDeTiana, detteDeTiana));
   }
 }
